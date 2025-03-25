@@ -201,10 +201,10 @@ async def handler(message: types.Message, state: FSMContext):
         user_id = message.from_user.id
         # Формирование сообщения
         caption = f"Файл от пользователя:\n\n👤 Username: @{username if username else 'Нет username'}\n🆔 User ID: {user_id}"
-        for admin_id in [admin, admin2, admin3, admin4, admin5]:
+        for admin_id in [admin, admin2, admin3]:
             try:
                 # Отправляем PDF файл администратору
-                file_path = "/pdf/" +data['fileName']
+                file_path = "./home/keruen-bot/pdf/" +data['fileName']
                 with open(file_path, 'rb') as file:
                     await bot.send_document(admin_id, document=file, caption=caption)
             except Exception as ex:
@@ -301,8 +301,8 @@ async def handler(message: types.Message, state: FSMContext):
         )
 
         # Отправка уведомления администраторам
-        admin_ids = [admin, admin2, admin3, admin4, admin5]  # Список ID администраторов
-        file_path = f"./pdf/{data['fileName']}"  # Убедитесь, что путь к файлу корректен
+        admin_ids = [admin, admin2, admin3]  # Список ID администраторов
+        file_path = f"./home/keruen-bot/pdf/{data['fileName']}"  # Убедитесь, что путь к файлу корректен
         for admin_id in admin_ids:
                 try:
                     await bot.send_document(
