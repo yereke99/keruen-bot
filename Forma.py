@@ -80,7 +80,7 @@ async def handler(message: types.Message, state: FSMContext):
         async with state.proxy() as data:
             data['count'] = int(message.text)
 
-        sum = 500 * data['count']
+        sum = 5000 * data['count']
 
         async with state.proxy() as data:
             data['sum'] = sum
