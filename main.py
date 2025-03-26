@@ -55,8 +55,8 @@ async def pdf_received_handler(message: types.Message, state: FSMContext):
             data['fileName'] = file_name
 
 
-            data['count'] = int(convert_currency_to_int(data['pdf_result'][1])/500)
-            sum = 500 * data['count']
+            data['count'] = int(convert_currency_to_int(data['pdf_result'][1])/5000)
+            sum = 5000 * data['count']
             data['sum'] = sum
             print(data['sum'])
 
@@ -82,12 +82,15 @@ async def pdf_received_handler(message: types.Message, state: FSMContext):
                         reply_markup=btn.menu()
                 )   
                 return
-
-            await Forma.s3.set()
-            await bot.send_message(
+            
+            await Forma.s0.set()
+            fileId = "BAACAgIAAxkBAAIBRmfik3-jy3tJARyn0qz4JQIDhortAAKIaQAC9EoRS0K4FbN0ODosNgQ"
+            await bot.send_video(
                 message.from_user.id,
-                text="*Аты жөніңізді жазыңыз*",
+                fileId,
+                caption="*Қандай түрдегі 🧦 шұлық алғыңыз келеді? (Төмендегі түймені ашып қарыңыз!) Бізде екі түрлі 🧦 шұлық бар(толығырақ видеода) Бағалары екі шұлық түріне бірдей, бір жиынтық 5000 теңге*",
                 parse_mode="Markdown",
+                reply_markup=btn.typeOfSocks()
             )
         else:
             await bot.send_message(
@@ -101,21 +104,21 @@ async def pdf_received_handler(message: types.Message, state: FSMContext):
         await message.reply("Тек, PDF файл жіберу керек!")
 
 
-
 @dp.callback_query_handler(lambda c: c.data == "buy_cinema")
 async def process_buy_cinema(callback_query: types.CallbackQuery):
     # Удаляем предыдущее сообщение
     await bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
 
     await bot.answer_callback_query(callback_query.id)
-    
     await Forma.s1.set()
-
-    await bot.send_message(
+    
+    fileId = "BAACAgIAAxkBAAIBRmfik3-jy3tJARyn0qz4JQIDhortAAKIaQAC9EoRS0K4FbN0ODosNgQ"
+    await bot.send_video(
         callback_query.from_user.id,
-        text="*Қанша шұлық алғыңыз келеді? Шұлық саны көп болған сайын ұтыста жеңу ықтималдығы жоғары 😉*",
+        video=fileId,
+        caption="*Қандай түрдегі 🧦 шұлық алғыңыз келеді? (Төмендегі түймені ашып қарыңыз!) Бізде екі түрлі 🧦 шұлық бар(толығырақ видеода) Бағалары екі шұлық түріне бірдей, бір жиынтық 5000 теңге*",
         parse_mode="Markdown",
-        reply_markup=btn.digits_and_cancel()
+        reply_markup=btn.typeOfSocks()
     ) 
   
 
@@ -367,15 +370,17 @@ async def handler(message: types.Message):
 
 
 @dp.message_handler(Text(equals="💳 Қайтадан керуен өнімін сатып алу"), content_types=['text'])
-async def handler(message: types.Message):
+async def handler(message: types.Message,  state: FSMContext):
     
     await Forma.s1.set()
-    await bot.send_message(
+    fileId = "BAACAgIAAxkBAAIBRmfik3-jy3tJARyn0qz4JQIDhortAAKIaQAC9EoRS0K4FbN0ODosNgQ"
+    await bot.send_video(
             message.from_user.id,
-            text="*Қанша шұлық алғыңыз келеді 😉?*",
+            fileId,
+            caption="*Қандай түрдегі 🧦 шұлық алғыңыз келеді? (Төмендегі түймені ашып қарыңыз!) Бізде екі түрлі 🧦 шұлық бар(толығырақ видеода) Бағалары екі шұлық түріне бірдей, бір жиынтық 5000 теңге*",
             parse_mode="Markdown",
-            reply_markup=btn.digits_and_cancel()
-    )
+            reply_markup=btn.typeOfSocks()
+        )
 
 """
 # Новый хендлер для обработки отправки PDF-файла

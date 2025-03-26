@@ -36,11 +36,14 @@ c3 = "AgACAgIAAxkBAAMZZyYg8clEejb320N0ZrK_Jb5YAV8AAq7hMRvQzjBJhxNPNuDLOMkBAAMCAA
 os.makedirs('./pdf/', exist_ok=True)
 
 class Forma(StatesGroup):
-    s1 = State()  # Шұлық саны
-    s2 = State()  # Read PDF
-    s3 = State()  # FIO
-    s4 = State()  # Контакт
-    s5 = State()  # Қала
+    s0 = State()  # Шұлық түрі (Арнайы)
+    sZ = State() 
+    s1 = State()  # Шұлық түрі
+    s2 = State()  # Шұлық саны
+    s3 = State()  # Read PDF
+    s4 = State()  # FIO
+    s5 = State()  # Контакт
+    s6 = State()  # Қала
 
 
 @dp.message_handler(state='*', commands='🔕 Бас тарту')
@@ -61,14 +64,43 @@ async def cancell_handler(message: types.Message, state: FSMContext):
     await state.finish()
     await message.reply('Сіз тапсырыстан бас тарттыңыз.', reply_markup=btn.menu_not_paid())
 
+@dp.message_handler(state=Forma.s0)
+async def handler(message: types.Message, state: FSMContext):
+    
+    async with state.proxy() as data:
+        data['type'] = message.text
+    
+    await Forma.s4.set()
 
+    await bot.send_message(
+        message.from_user.id,
+        text=f"*Сіздің таңдаған шұлық түрі: \n{data['type']}\nАты жөніңізді жазыңыз*",
+        parse_mode="Markdown",
+        reply_markup=btn.cancel()
+    ) 
 
-@dp.message_handler(lambda message: not message.text.isdigit(), state=Forma.s1)
+@dp.message_handler(state=Forma.s1)
+async def handler(message: types.Message, state: FSMContext):
+    
+    async with state.proxy() as data:
+        data['type'] = message.text
+    
+    await Forma.s2.set()
+
+    await bot.send_message(
+        message.from_user.id,
+        text=f"*Сіздің таңдаған шұлық түрі: \n{data['type']}\nҚанша шұлық алғыңыз келеді? Шұлық саны көп болған сайын ұтыста жеңу ықтималдығы жоғары 😉*",
+        parse_mode="Markdown",
+        reply_markup=btn.digits_and_cancel()
+    ) 
+    
+
+@dp.message_handler(lambda message: not message.text.isdigit(), state=Forma.s2)
 async def handler(message: types.Message):
     return await message.reply("Сандармен жазыңыз 🔢")
 
 
-@dp.message_handler(lambda message: message.text.isdigit(), state=Forma.s1)
+@dp.message_handler(lambda message: message.text.isdigit(), state=Forma.s2)
 async def handler(message: types.Message, state: FSMContext):
 
     """
@@ -107,18 +139,17 @@ async def handler(message: types.Message, state: FSMContext):
             parse_mode="Markdown",
             reply_markup=btn.digits_and_cancel()
         )   
-
         await bot.send_message(
             admin,
             text="Error: %s"%str(e),
         )   
 
-@dp.message_handler(lambda message: not (message.document and message.document.mime_type == 'application/pdf'), state=Forma.s2, content_types=types.ContentType.DOCUMENT)
+@dp.message_handler(lambda message: not (message.document and message.document.mime_type == 'application/pdf'), state=Forma.s3, content_types=types.ContentType.DOCUMENT)
 async def pdf_validator(message: types.Message, state: FSMContext):
     await message.reply(".pdf файл форматымен жіберіңіз!")
-    await Forma.s2.set()
+    await Forma.s3.set()
 
-@dp.message_handler(state=Forma.s2, content_types=types.ContentType.DOCUMENT)
+@dp.message_handler(state=Forma.s3, content_types=types.ContentType.DOCUMENT)
 async def handler(message: types.Message, state: FSMContext):
 
     try:
@@ -210,7 +241,7 @@ async def handler(message: types.Message, state: FSMContext):
             except Exception as ex:
                 print(f"Не удалось отправить файл администратору {admin_id}: {str(ex)}")
         
-        await Forma.s2.set()
+        await Forma.s3.set()
         await bot.send_message(
                 message.from_user.id,
                 text="Төлем жасаған соң чекті 📲 .pdf форматында жіберіңіз!\n\n*НАЗАР АУДАРЫҢЫЗ ЧЕКТІ МОДЕРАТОР ТЕКСЕРЕДІ\n\n ЕСКЕРТУ ❗️\nЖАЛҒАН ЧЕК ЖІБЕРУ НЕМЕСЕ БАСҚАДА ДҰЫРЫС ЕМЕС ЧЕКТЕР ЖІБЕРУ АВТОМАТТЫ ТҮРДЕ ҰТЫС ОЙЫННАН ШЫҒАРЫЛАДЫ*",
@@ -219,7 +250,7 @@ async def handler(message: types.Message, state: FSMContext):
             ) 
         
 
-@dp.message_handler(state=Forma.s3)
+@dp.message_handler(state=Forma.s4)
 async def handler(message: types.Message, state: FSMContext):
     
     async with state.proxy() as data:
@@ -235,8 +266,7 @@ async def handler(message: types.Message, state: FSMContext):
     )
     
     
-    
-@dp.message_handler(state=Forma.s4, content_types=types.ContentType.CONTACT)
+@dp.message_handler(state=Forma.s5, content_types=types.ContentType.CONTACT)
 async def handler(message: types.Message, state: FSMContext):
 
     async with state.proxy() as data:
@@ -255,7 +285,7 @@ async def handler(message: types.Message, state: FSMContext):
 
     
 
-@dp.message_handler(state=Forma.s5)
+@dp.message_handler(state=Forma.s6)
 async def handler(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['city'] = message.text
@@ -302,7 +332,7 @@ async def handler(message: types.Message, state: FSMContext):
 
         # Отправка уведомления администраторам
         admin_ids = [admin, admin2, admin3]  # Список ID администраторов
-        file_path = f"./home/keruen-bot/pdf/{data['fileName']}"  # Убедитесь, что путь к файлу корректен
+        file_path = f"/home/keruen-bot/pdf/{data['fileName']}"  # Убедитесь, что путь к файлу корректен
         for admin_id in admin_ids:
                 try:
                     await bot.send_document(
@@ -311,6 +341,7 @@ async def handler(message: types.Message, state: FSMContext):
                         caption=(
                             f"✅ *Жаңа тапсырыс төленді!*\n\n"
                             f"📋 Тапсырыс мәліметтері:\n"
+                            f"🧦 Шұлық түрі: {data['type']}"
                             f"👤 ФИО: {data['fio']}\n"
                             f"📞 Байланыс: {data['contact']}\n"
                             f"📍 Қала: {data['city']}\n"
