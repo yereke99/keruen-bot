@@ -40,9 +40,10 @@ async def pdf_received_handler(message: types.Message, state: FSMContext):
         await bot.download_file(file_info.file_path, file_path)
 
         # Process the PDF file
-        pdf_reader = PDFReader(file_path)
+        pdf_reader = PDFReaders(file_path)
         pdf_reader.open_pdf()
-        result = pdf_reader.extract_specific_info()
+        #result = pdf_reader.extract_specific_info()
+        result = pdf_reader.extract_detailed_info()
         pdf_reader.close_pdf()
 
         
@@ -55,15 +56,15 @@ async def pdf_received_handler(message: types.Message, state: FSMContext):
             data['fileName'] = file_name
 
 
-            data['count'] = int(convert_currency_to_int(data['pdf_result'][1])/5000)
+            data['count'] = int(convert_currency_to_int(data['pdf_result'][3])/5000)
             sum = 5000 * data['count']
             data['sum'] = sum
             print(data['sum'])
 
         
-        print(f"Expected sum: {data['sum']}, Actual sum: {convert_currency_to_int(data['pdf_result'][1])}")
+        print(f"Expected sum: {data['sum']}, Actual sum: {convert_currency_to_int(data['pdf_result'][3])}")
 
-        if convert_currency_to_int(data['pdf_result'][1]) != data['sum']: 
+        if convert_currency_to_int(data['pdf_result'][3]) != data['sum']: 
             await bot.send_message(
                 message.from_user.id,
                 text="*Төленетін сумма қате!\nҚайталап көріңіз*",
@@ -72,9 +73,9 @@ async def pdf_received_handler(message: types.Message, state: FSMContext):
             ) 
             return
         
-        if data['pdf_result'][3] == "Сатушының ЖСН/БСН 811212302853" or data['pdf_result'][3] == "ИИН/БИН продавца 811212302853":
-            print(db.CheckLoto(data['pdf_result'][2]))
-            if db.CheckLoto(data['pdf_result'][2]) == True:
+        if data['pdf_result'][10] == "Сатушының ЖСН/БСН 811212302853" or data['pdf_result'][10] == "ИИН/БИН продавца 811212302853":
+            print(db.CheckLoto(data['pdf_result'][6]))
+            if db.CheckLoto(data['pdf_result'][6]) == True:
                 await bot.send_message(
                         message.from_user.id,
                         text="*ЧЕК ТӨЛЕНІП ҚОЙЫЛҒАН!\nҚайталап көріңіз*",
@@ -88,7 +89,8 @@ async def pdf_received_handler(message: types.Message, state: FSMContext):
             await bot.send_video(
                 message.from_user.id,
                 fileId,
-                caption="*Қандай түрдегі 🧦 шұлық алғыңыз келеді? (Төмендегі түймені ашып қарыңыз!) Бізде екі түрлі 🧦 шұлық бар(толығырақ видеода) Бағалары екі шұлық түріне бірдей, бір жиынтық 5000 теңге*",
+                caption="""*Кандай түрдегі носки алғыңыз келеді?
+(Төмендегі түймені ашып караңыз!) Екі түрі бар! Ұзын носки ақ қара 5 данасы 5000 тг, қысқа носки ақ қарасы 7 данасы 5000 тг.( Ер әйлге бөлінбейді)*""",
                 parse_mode="Markdown",
                 reply_markup=btn.typeOfSocks()
             )
@@ -116,7 +118,8 @@ async def process_buy_cinema(callback_query: types.CallbackQuery):
     await bot.send_video(
         callback_query.from_user.id,
         video=fileId,
-        caption="*Қандай түрдегі 🧦 шұлық алғыңыз келеді? (Төмендегі түймені ашып қарыңыз!) Бізде екі түрлі 🧦 шұлық бар(толығырақ видеода) Бағалары екі шұлық түріне бірдей, бір жиынтық 5000 теңге*",
+        caption="""*Кандай түрдегі носки алғыңыз келеді?
+(Төмендегі түймені ашып караңыз!) Екі түрі бар! Ұзын носки ақ қара 5 данасы 5000 тг, қысқа носки ақ қарасы 7 данасы 5000 тг.( Ер әйлге бөлінбейді)*""",
         parse_mode="Markdown",
         reply_markup=btn.typeOfSocks()
     ) 
@@ -164,6 +167,47 @@ async def handler(message: types.Message):
         reply_markup=btn.admin()
     )
  
+
+@dp.message_handler(commands=['send'])
+async def send_to_channel(message: types.Message):
+    """
+    Отправка сообщения и видео в канал
+    """
+    CHANNEL_ID = "@keruen_sauda_kz"
+    FILE_ID =  "BAACAgIAAxkBAAIBRGfikw74saJw7kYZS6QasxskT4XoAAJ7aQAC9EoRS4kQw0L6RQFWNgQ"
+    MESSAGE_TEXT = """KN KERUEN экологиялық таза, сапалы шұлықтар брендтіне қош келдіңіз!
+
+Біздың шұлықтар - 100 % табиғи бамбуктан жасалған, жоғары сапа мен жайлылықты ұсынады!
+100% Евро стандартқа сай шұлықтар! 🌱🧦
+
+Акция! Акция!
+Біздің шұлықтарды сатып ала отырып!
+Керемет сыйлықтарға ие болыңыз!
+Сыйлықтар тізімі!
+. Авто көлік
+. Пәтер
+. пылесос 
+. Ас үй комбайны!
+. Бу үтігі
+. Планшет
+
+
+Тіркеліп, ұтыс ойынына қатысыңыз! (Тіркелу үшін төмендегі сілтемеге өтіңіз 👇)
+KN KERUEN — сіздің жайлылығыңыз біз үшін маңызды!"""
+
+    try:
+        # Отправляем видео с текстом и кнопкой
+        await bot.request("sendVideo", {
+            "chat_id": CHANNEL_ID,
+            "video": FILE_ID,
+            "caption": MESSAGE_TEXT,
+            "reply_markup": btn.tg_link(),
+            "protected_content": True  # Указываем защиту
+        })
+        await message.reply("Сообщение отправлено в канал!")
+    except Exception as e:
+        await message.reply(f"Ошибка: {e}")
+
 
 @dp.message_handler(Text(equals="📈 Статистика"), content_types=['text'])
 async def handler(message: types.Message):
@@ -347,6 +391,7 @@ async def handler(message: types.Message):
                 reply_markup=btn.admin()
             )    
 
+
 @dp.message_handler(Text(equals="📨 Хабарлама жіберу"), content_types=['text'])
 async def handler(message: types.Message):
     if message.from_user.id == admin or message.from_user.id == admin2 or message.from_user.id == admin3:
@@ -470,7 +515,6 @@ async def handler(message: types.Message):
     )
 
 
-    
 @dp.message_handler(Text(equals="🎁 Сыйлықтар"), content_types=['text'])
 async def handler(message: types.Message):
     print(message.from_user.id)
@@ -481,6 +525,75 @@ async def handler(message: types.Message):
         parse_mode="Markdown",
         reply_markup=btn.gift()
     )
+
+from aiogram.dispatcher.filters import Text
+
+@dp.message_handler(Text(equals=[
+    "🧦 1 дана шұлық", "🧦 2 дана шұлық", "🧦 3 дана шұлық",
+    "🧦 4 дана шұлық", "🧦 5 дана шұлық", "🧦 6 дана шұлық",
+    "🧦 7 дана шұлық", "🧦 8 дана шұлық", "🧦 9 дана шұлық",
+    "🧦 10 дана шұлық", "💸 10 000 теңге", "💸 20 000 теңге",
+    "💸 30 000 теңге", "💨 Dyson плюсесі", "🧼 Химчистка плюсесі"
+]), content_types=['text'])
+async def gift_handler(message: types.Message):
+    if message.from_user.id not in [admin, admin2, admin3]:
+        return
+
+    prize_text = message.text
+    steps = [50, 25, 10, 1]
+
+    # Получаем 100 записей из базы данных
+    entries = db.fetch_random_loto_car(100)
+    if not entries:
+        await bot.send_message(
+            message.from_user.id,
+            text="Мәліметтер табылмады.",
+            reply_markup=btn.gift()
+        )
+        return
+
+    # Отправляем начальные 100 записей как одно сообщение
+    first_batch = entries[:100]
+    text = "\n\n".join([f"ID Loto: {row[0]}\nContact: {row[1]}\nData Pay: {row[2]}" for row in first_batch])
+    for chunk in split_message(text):
+        sent_message = await bot.send_message(
+            message.from_user.id,
+            text=chunk,
+            reply_markup=btn.gift()
+        )
+        await asyncio.sleep(1)
+        await bot.delete_message(message.from_user.id, sent_message.message_id)
+
+    # Обработка последующих этапов
+    current_entries = entries
+    for i, step in enumerate(steps):
+        current_entries = random.sample(current_entries, step)
+
+        if step == 1:
+            row = current_entries[0]
+            text = (
+                f"{prize_text} 🏆 ЖЕҢІМПАЗ!\n\n"
+                f"ID Loto: {row[0]}\n"
+                f"Contact: {row[1]}\n"
+                f"Data Pay: {row[2]}"
+            )
+        else:
+            text = "\n\n".join([f"ID Loto: {row[0]}\nContact: {row[1]}\nData Pay: {row[2]}" for row in current_entries])
+
+        # Отправляем сообщение и удаляем его, кроме последнего этапа
+        for chunk in split_message(text):
+            sent_message = await bot.send_message(
+                message.from_user.id,
+                text=chunk,
+                reply_markup=btn.gift()
+            )
+            if i < len(steps) - 1:
+                await asyncio.sleep(5)
+                await bot.delete_message(message.from_user.id, sent_message.message_id)
+
+        await asyncio.sleep(0.5)
+
+
 
 @dp.message_handler(Text(equals="🎁 1-ші сыйлық"), content_types=['text'])
 async def handler(message: types.Message):
@@ -993,7 +1106,7 @@ async def send_pdf_with_caption(user_id, id_loto, caption):
         return
 
     receipt = loto_info[3]  # Adjusted index for receipt column
-    pdf_path = f"/home/cinema/pdf/{receipt}"
+    pdf_path = f"/home/keruen-bot/pdf/{receipt}"
     
     if os.path.exists(pdf_path):
         await bot.send_document(

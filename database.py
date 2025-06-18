@@ -48,6 +48,7 @@ class Database():
                                     qr VARCHAR(255),
                                     who_paid VARCHAR(255),
                                     receipt VARCHAR(255),
+                                    typeOfSocks VARCHAR(255),
                                     fio VARCHAR(255),
                                     contact VARCHAR(255),
                                     city VARCHAR(255),
@@ -144,7 +145,7 @@ class Database():
             print(e)
             return False    
         
-    def InsertLoto(self, id_user, id_loto, qr, who_paid, receipt, fio, contact, city, dataPay) -> bool:
+    def InsertLoto(self, id_user, id_loto, qr, who_paid, receipt, typeOfSocks, fio, contact, city, dataPay) -> bool:
         try:
             insertLotoQuery = """INSERT INTO loto(
                                     id_user,
@@ -152,12 +153,13 @@ class Database():
                                     qr,
                                     who_paid,
                                     receipt,
+                                    typeOfSocks,
                                     fio,
                                     contact,
                                     city,
                                     dataPay
-                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"""
-            self.cursor.execute(insertLotoQuery, (id_user, id_loto, qr, who_paid, receipt, fio, contact, city, dataPay))
+                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
+            self.cursor.execute(insertLotoQuery, (id_user, id_loto, qr, who_paid, receipt, typeOfSocks, fio, contact, city, dataPay))
             self.db.commit()
             return True
         except Exception as e:

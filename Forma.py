@@ -167,9 +167,10 @@ async def handler(message: types.Message, state: FSMContext):
         await bot.download_file(file_info.file_path, file_path)
 
         # Process the PDF file
-        pdf_reader = PDFReader(file_path)
+        pdf_reader = PDFReaders(file_path)
         pdf_reader.open_pdf()
-        result = pdf_reader.extract_specific_info()
+        #result = pdf_reader.extract_specific_info()
+        result = pdf_reader.extract_detailed_info()
         pdf_reader.close_pdf()
 
 
@@ -180,7 +181,7 @@ async def handler(message: types.Message, state: FSMContext):
 
         print(data['pdf_result'])
         
-        if convert_currency_to_int(data['pdf_result'][1]) != data['sum']: 
+        if convert_currency_to_int(data['pdf_result'][3]) != data['sum']: 
             await bot.send_message(
                 message.from_user.id,
                 text="*Төленетін сумма қате!\nҚайталап көріңіз*",
@@ -191,10 +192,12 @@ async def handler(message: types.Message, state: FSMContext):
             return
         
         print(data['pdf_result'][3])
+        print(data['pdf_result'][11])
+       
         
-        if data['pdf_result'][3] == "Сатушының ЖСН/БСН 811212302853" or data['pdf_result'][3] == "ИИН/БИН продавца 811212302853":
-            print(db.CheckLoto(data['pdf_result'][2]))
-            if db.CheckLoto(data['pdf_result'][2]) == True:
+        if data['pdf_result'][10] == "Сатушының ЖСН/БСН 811212302853" or data['pdf_result'][10] == "ИИН/БИН продавца 811212302853":
+            print(db.CheckLoto(data['pdf_result'][6]))
+            if db.CheckLoto(data['pdf_result'][6]) == True:
                 await bot.send_message(
                     message.from_user.id,
                     text="*ЧЕК ТӨЛЕНІП ҚОЙЫЛҒАН!\nҚайталап көріңіз*",
@@ -306,7 +309,8 @@ async def handler(message: types.Message, state: FSMContext):
             db.InsertLoto(
                 message.from_user.id,
                 gen,
-                data['pdf_result'][2], # data['pdf_result'][6]
+                data['pdf_result'][6], # data['pdf_result'][6]
+                data['type'],
                 message.from_user.username,
                 data['fileName'],
                 data['fio'],
@@ -341,11 +345,11 @@ async def handler(message: types.Message, state: FSMContext):
                         caption=(
                             f"✅ *Жаңа тапсырыс төленді!*\n\n"
                             f"📋 Тапсырыс мәліметтері:\n"
-                            f"🧦 Шұлық түрі: {data['type']}"
+                            f"🧦 Шұлық түрі: {data['type']}\n"
                             f"👤 ФИО: {data['fio']}\n"
                             f"📞 Байланыс: {data['contact']}\n"
                             f"📍 Қала: {data['city']}\n"
-                            f"💸 Төлем сомасы: {data['pdf_result'][1]} KZT\n"
+                            f"💸 Төлем сомасы: {data['pdf_result'][3]} KZT\n"
                             f"📁 Файл атауы: {data['fileName']}\n\n"
                             "🔔 Бұл тапсырысты өңдеуге дайын болыңыз."
                         ),
@@ -355,6 +359,7 @@ async def handler(message: types.Message, state: FSMContext):
                     logging.error(f"Не удалось отправить сообщение администратору {admin_id}: {e}")
 
         await state.finish()
+
     else:
         await bot.send_message(
             message.from_user.id,
@@ -363,5 +368,3 @@ async def handler(message: types.Message, state: FSMContext):
             reply_markup=btn.menu_not_paid()
         )
         await state.finish()
-
-    
